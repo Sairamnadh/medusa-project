@@ -51,13 +51,13 @@ resource "aws_ecs_cluster" "medusa_cluster" {
   name = "medusa-cluster"
 }
 
-# ECS Task Definition for Medusa
 resource "aws_ecs_task_definition" "medusa_task" {
   family                   = "medusa-task"
   network_mode             = "awsvpc"
   requires_compatibilities = ["FARGATE"]
   cpu                      = "256"
   memory                   = "512"
+  execution_role_arn       = aws_iam_role.ecs_execution_role.arn  # Add this line
 
   container_definitions = jsonencode([{
     name      = "medusa-container"
@@ -76,6 +76,7 @@ resource "aws_ecs_task_definition" "medusa_task" {
     Name = "medusa-task"
   }
 }
+
 
 # VPC
 resource "aws_vpc" "medusa_vpc" {
