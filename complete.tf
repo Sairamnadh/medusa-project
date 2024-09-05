@@ -21,12 +21,10 @@ resource "aws_ecr_repository" "medusa_ecr" {
 
   tags = {
     Name = "medusa-ecr-repository"
-  }
+  
 }
-
   lifecycle {
     ignore_changes = [name]
-  }
 }
 
 # IAM Role for ECS Task Execution
