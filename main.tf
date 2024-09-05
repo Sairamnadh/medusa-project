@@ -9,58 +9,41 @@ terraform {
 
 provider "aws" {
   region = var.aws_region
-
-
 }
-resource "aws_iam_role" "ecs_execution_role" {
+
+# Reference existing IAM Role instead of creating a new one
+data "aws_iam_role" "ecs_execution_role" {
   name = "ecsExecutionRole1"
-
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17",
-    Statement = [
-      {
-        Effect = "Allow",
-        Principal = {
-          Service = "ecs-tasks.amazonaws.com",
-        },
-        Action = "sts:AssumeRole",
-      },
-    ],
-  })
-
-  tags = {
-    Name = "ecsExecutionRole1"
-  }
 }
 
+# Attach the execution role policy to the existing role
 resource "aws_iam_role_policy_attachment" "ecs_execution_role_policy" {
-  role      = aws_iam_role.ecs_execution_role.name
+  role       = data.aws_iam_role.ecs_execution_role.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
 }
 
+# ECS cluster definition
 resource "aws_ecs_cluster" "medusa_cluster" {
   name = "medusa-cluster"
 }
 
-resource "aws_ecr_repository" "medusa_ecr" {
+# Reference existing ECR repository instead of creating a new one
+data "aws_ecr_repository" "medusa_ecr" {
   name = "medusa-repository"
-
-  tags = {
-    Name = "medusa-repository"
-  }
 }
 
+# ECS task definition using the existing IAM role and ECR repository
 resource "aws_ecs_task_definition" "medusa_task" {
   family                   = "medusa-task"
   network_mode             = "awsvpc"
   requires_compatibilities = ["FARGATE"]
   cpu                      = "256"
   memory                   = "512"
-  execution_role_arn       = aws_iam_role.ecs_execution_role.arn
+  execution_role_arn       = data.aws_iam_role.ecs_execution_role.arn
 
   container_definitions = jsonencode([{
     name      = "medusa-container"
-    image     = "${aws_ecr_repository.medusa_ecr.repository_url}:latest"
+    image     = "${data.aws_ecr_repository.medusa_ecr.repository_url}:latest"
     cpu       = 0
     memory    = 512
     essential = true
@@ -76,6 +59,7 @@ resource "aws_ecs_task_definition" "medusa_task" {
   }
 }
 
+# ECS service definition
 resource "aws_ecs_service" "medusa_service" {
   name            = "medusa-service"
   cluster         = aws_ecs_cluster.medusa_cluster.id
@@ -94,6 +78,7 @@ resource "aws_ecs_service" "medusa_service" {
   }
 }
 
+# VPC definition
 resource "aws_vpc" "medusa_vpc" {
   cidr_block = "10.0.0.0/16"
 
@@ -102,6 +87,7 @@ resource "aws_vpc" "medusa_vpc" {
   }
 }
 
+# Subnet definitions
 resource "aws_subnet" "subnet1" {
   vpc_id            = aws_vpc.medusa_vpc.id
   cidr_block        = "10.0.1.0/24"
@@ -122,6 +108,7 @@ resource "aws_subnet" "subnet2" {
   }
 }
 
+# Security group definition
 resource "aws_security_group" "ecs_security_group" {
   vpc_id = aws_vpc.medusa_vpc.id
 
