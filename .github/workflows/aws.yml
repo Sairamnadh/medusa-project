@@ -10,7 +10,7 @@ env:
 
 permissions:
   contents: read
-  id-token: write  # Required for some GitHub Actions to interact with AWS services
+  id-token: write
 
 jobs:
   deploy:
@@ -25,7 +25,7 @@ jobs:
     - name: Set up Terraform
       uses: hashicorp/setup-terraform@v2
       with:
-        terraform_version: 1.5.0  # Use the version of Terraform that you require
+        terraform_version: 1.5.0
 
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v1
@@ -68,3 +68,4 @@ jobs:
 
     - name: Deploy with Terraform
       run: terraform apply -auto-approve
+
