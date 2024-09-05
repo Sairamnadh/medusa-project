@@ -17,6 +17,13 @@ jobs:
         with:
           terraform_version: 1.5.0
 
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1  # Change to your desired region
+
       - name: Terraform Init
         run: terraform init
 
@@ -27,7 +34,7 @@ jobs:
   cleanup:
     runs-on: ubuntu-latest
     needs: terraform
-    if: failure()  # This ensures the cleanup job only runs if the terraform job fails
+    if: failure()
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -36,6 +43,13 @@ jobs:
         uses: hashicorp/setup-terraform@v2
         with:
           terraform_version: 1.5.0
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
 
       - name: Terraform Destroy
         run: terraform destroy -auto-approve
