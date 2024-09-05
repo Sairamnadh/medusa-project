@@ -177,4 +177,3 @@ resource "aws_ecs_service" "medusa_service" {
     Name = "medusa-service"
   }
 }
-#test
