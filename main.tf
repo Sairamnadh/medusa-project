@@ -11,6 +11,7 @@ provider "aws" {
   region = var.aws_region
 }
 
+# Create a new IAM role for ECS execution
 resource "aws_iam_role" "ecs_execution_role" {
   name = "ecsExecutionRole1"
   
@@ -29,6 +30,7 @@ resource "aws_iam_role" "ecs_execution_role" {
     Name = "ecsExecutionRole1"
   }
 }
+
 # Attach the execution role policy to the new role
 resource "aws_iam_role_policy_attachment" "ecs_execution_role_policy" {
   role       = aws_iam_role.ecs_execution_role.name
@@ -56,11 +58,11 @@ resource "aws_ecs_task_definition" "medusa_task" {
   requires_compatibilities = ["FARGATE"]
   cpu                      = "256"
   memory                   = "512"
-  execution_role_arn       = data.aws_iam_role.ecs_execution_role.arn
+  execution_role_arn       = aws_iam_role.ecs_execution_role.arn  # Reference new IAM role
 
   container_definitions = jsonencode([{
     name      = "medusa-container"
-    image     = "${aws_ecr_repository.medusa_ecr.repository_url}:latest"  # Use the new ECR repository
+    image     = "${aws_ecr_repository.medusa_ecr.repository_url}:latest"  # Reference new ECR repository
     cpu       = 0
     memory    = 512
     essential = true
