@@ -36,6 +36,11 @@ jobs:
     - name: Terraform Init
       run: terraform init
 
+    - name: Import existing resources
+      run: |
+        terraform import aws_ecr_repository.medusa_ecr medusa-repository
+        terraform import aws_iam_role.ecs_execution_role ecsExecutionRole
+
     - name: Terraform Plan
       run: terraform plan
 
