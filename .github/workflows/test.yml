@@ -1,68 +1,32 @@
-name: Deploy to Amazon ECS with Terraform
+name: Deploy to AWS ECS
 
 on:
   push:
-    branches: [ "master" ]
-
-env:
-  AWS_REGION: us-east-1
-
-permissions:
-  contents: read
-  id-token: write  # Required for some GitHub Actions to interact with AWS services
+    branches:
+      - master
 
 jobs:
   deploy:
-    name: Deploy
     runs-on: ubuntu-latest
-    environment: production
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-    - name: Set up Terraform
-      uses: hashicorp/setup-terraform@v2
-      with:
-        terraform_version: 1.5.0  # Use the version of Terraform that you require
+      - name: Set up AWS CLI
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
 
-    - name: Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@v1
-      with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_KEY }}
-        aws-region: ${{ env.AWS_REGION }}
+      - name: Terraform Setup
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.5.0
 
-    - name: Terraform Init
-      run: terraform init
+      - name: Terraform Init
+        run: terraform init
 
-    - name: Terraform Plan
-      run: terraform plan
-
-    - name: Terraform Apply
-      run: terraform apply -auto-approve
-
-    - name: Login to Amazon ECR
-      id: login-ecr
-      uses: aws-actions/amazon-ecr-login@v1
-
-    - name: Build, tag, and push image to Amazon ECR
-      id: build-image
-      env:
-        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-        IMAGE_TAG: ${{ github.sha }}
-      run: |
-        if [ -f "Dockerfile" ]; then
-          docker build -t $ECR_REGISTRY/medusa-repository:$IMAGE_TAG .
-          docker tag $ECR_REGISTRY/medusa-repository:$IMAGE_TAG $ECR_REGISTRY/medusa-repository:$IMAGE_TAG
-          docker push $ECR_REGISTRY/medusa-repository:$IMAGE_TAG
-          echo "image=$ECR_REGISTRY/medusa-repository:$IMAGE_TAG" >> $GITHUB_ENV
-        else
-          echo "Dockerfile not found, skipping Docker build and push"
-        fi
-
-    - name: Update ECS Task Definition with New Image
-      run: terraform apply -auto-approve -var="image_id=${{ env.image }}"
-
-    - name: Deploy with Terraform
-      run: terraform apply -auto-approve
+      - name: Terraform Apply
+        run: terraform apply -auto-approve
