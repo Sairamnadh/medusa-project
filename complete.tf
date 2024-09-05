@@ -55,6 +55,9 @@ resource "aws_iam_role_policy_attachment" "ecs_execution_role_policy" {
 resource "null_resource" "docker_build_and_push" {
   provisioner "local-exec" {
     command = <<EOT
+      echo "AWS Region: ${var.aws_region}"
+      echo "ECR URL: ${data.aws_caller_identity.current.account_id}.dkr.ecr.${var.aws_region}.amazonaws.com"
+
       # Log in to AWS ECR
       aws ecr get-login-password --region ${var.aws_region} | docker login --username AWS --password-stdin ${data.aws_caller_identity.current.account_id}.dkr.ecr.${var.aws_region}.amazonaws.com
 
