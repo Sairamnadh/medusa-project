@@ -11,14 +11,27 @@ provider "aws" {
   region = var.aws_region
 }
 
-# Reference existing IAM Role instead of creating a new one
-data "aws_iam_role" "ecs_execution_role" {
+resource "aws_iam_role" "ecs_execution_role" {
   name = "ecsExecutionRole1"
-}
+  
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [{
+      Action = "sts:AssumeRole",
+      Effect = "Allow",
+      Principal = {
+        Service = "ecs-tasks.amazonaws.com"
+      }
+    }]
+  })
 
-# Attach the execution role policy to the existing role
+  tags = {
+    Name = "ecsExecutionRole1"
+  }
+}
+# Attach the execution role policy to the new role
 resource "aws_iam_role_policy_attachment" "ecs_execution_role_policy" {
-  role       = data.aws_iam_role.ecs_execution_role.name
+  role       = aws_iam_role.ecs_execution_role.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
 }
 
@@ -27,12 +40,16 @@ resource "aws_ecs_cluster" "medusa_cluster" {
   name = "medusa-cluster"
 }
 
-# Reference existing ECR repository instead of creating a new one
-data "aws_ecr_repository" "medusa_ecr" {
+# Create a new ECR repository
+resource "aws_ecr_repository" "medusa_ecr" {
   name = "medusa-repository"
+
+  tags = {
+    Name = "medusa-repository"
+  }
 }
 
-# ECS task definition using the existing IAM role and ECR repository
+# ECS task definition using the new IAM role and ECR repository
 resource "aws_ecs_task_definition" "medusa_task" {
   family                   = "medusa-task"
   network_mode             = "awsvpc"
@@ -43,7 +60,7 @@ resource "aws_ecs_task_definition" "medusa_task" {
 
   container_definitions = jsonencode([{
     name      = "medusa-container"
-    image     = "${data.aws_ecr_repository.medusa_ecr.repository_url}:latest"
+    image     = "${aws_ecr_repository.medusa_ecr.repository_url}:latest"  # Use the new ECR repository
     cpu       = 0
     memory    = 512
     essential = true
