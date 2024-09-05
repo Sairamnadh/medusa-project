@@ -2,13 +2,15 @@ name: Deploy to Amazon ECS with Terraform
 
 on:
   push:
-    branches: [ "master" ]
+    branches:
+      - main
 
 env:
   AWS_REGION: us-east-1
 
 permissions:
   contents: read
+  id-token: write  # Required for some GitHub Actions to interact with AWS services
 
 jobs:
   deploy:
@@ -23,7 +25,7 @@ jobs:
     - name: Set up Terraform
       uses: hashicorp/setup-terraform@v2
       with:
-        terraform_version: 1.5.0
+        terraform_version: 1.5.0  # Use the version of Terraform that you require
 
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v1
@@ -58,8 +60,11 @@ jobs:
       run: |
         docker build -t $ECR_REGISTRY/medusa-repo:$IMAGE_TAG .
         docker push $ECR_REGISTRY/medusa-repo:$IMAGE_TAG
-        echo "image=$ECR_REGISTRY/medusa-repo:$IMAGE_TAG" >> $GITHUB_OUTPUT
+        echo "image=$ECR_REGISTRY/medusa-repo:$IMAGE_TAG" >> $GITHUB_ENV
 
     - name: Update ECS Task Definition with New Image
       run: |
-        terraform apply -auto-approve -var="image_id=${{ steps.build-image.outputs.image }}"
+        terraform apply -auto-approve -var="image_id=${{ env.image }}"
+
+    - name: Deploy with Terraform
+      run: terraform apply -auto-approve
