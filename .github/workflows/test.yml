@@ -52,11 +52,12 @@ jobs:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         IMAGE_TAG: ${{ github.sha }}
       run: |
+        cd path/to/dockerfile/ # Update this path as needed
         if [ -f "Dockerfile" ]; then
-          docker build -t $ECR_REGISTRY/medusa-repo:$IMAGE_TAG .
-          docker tag medusa-repo:$IMAGE_TAG $ECR_REGISTRY/medusa-repo:$IMAGE_TAG
-          docker push $ECR_REGISTRY/medusa-repo:$IMAGE_TAG
-          echo "image=$ECR_REGISTRY/medusa-repo:$IMAGE_TAG" >> $GITHUB_ENV
+          docker build -t $ECR_REGISTRY/medusa-repository:$IMAGE_TAG .
+          docker tag $ECR_REGISTRY/medusa-repository:$IMAGE_TAG $ECR_REGISTRY/medusa-repository:$IMAGE_TAG
+          docker push $ECR_REGISTRY/medusa-repository:$IMAGE_TAG
+          echo "image=$ECR_REGISTRY/medusa-repository:$IMAGE_TAG" >> $GITHUB_ENV
         else
           echo "Dockerfile not found, skipping Docker build and push"
         fi
