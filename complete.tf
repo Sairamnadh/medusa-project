@@ -24,6 +24,11 @@ resource "aws_ecr_repository" "medusa_ecr" {
   }
 }
 
+  lifecycle {
+    ignore_changes = [name]
+  }
+}
+
 # IAM Role for ECS Task Execution
 resource "aws_iam_role" "ecs_execution_role" {
   name = "ecsExecutionRole"
