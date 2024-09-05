@@ -9,6 +9,7 @@ env:
 
 permissions:
   contents: read
+  id-token: write  # Required for some GitHub Actions to interact with AWS services
 
 jobs:
   deploy:
@@ -25,6 +26,13 @@ jobs:
       with:
         terraform_version: 1.5.0  # Use the version of Terraform that you require
 
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+
     - name: Terraform Init
       run: terraform init
 
@@ -33,13 +41,6 @@ jobs:
 
     - name: Terraform Apply
       run: terraform apply -auto-approve
-
-    - name: Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@v1
-      with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_KEY }}
-        aws-region: ${{ env.AWS_REGION }}
 
     - name: Login to Amazon ECR
       id: login-ecr
@@ -53,12 +54,11 @@ jobs:
       run: |
         docker build -t $ECR_REGISTRY/medusa-repo:$IMAGE_TAG .
         docker push $ECR_REGISTRY/medusa-repo:$IMAGE_TAG
-        echo "image=$ECR_REGISTRY/medusa-repo:$IMAGE_TAG" >> $GITHUB_OUTPUT
+        echo "image=$ECR_REGISTRY/medusa-repo:$IMAGE_TAG" >> $GITHUB_ENV
 
-    # Optional: Fill in the image ID if needed in Terraform
     - name: Update ECS Task Definition with New Image
       run: |
-        terraform apply -auto-approve -var="image_id=${{ steps.build-image.outputs.image }}"
+        terraform apply -auto-approve -var="image_id=${{ env.image }}"
 
-    - name: Deploy with Terraform (if needed)
+    - name: Deploy with Terraform
       run: terraform apply -auto-approve
