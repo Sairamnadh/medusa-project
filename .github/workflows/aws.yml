@@ -2,7 +2,8 @@ name: Deploy to Amazon ECS with Terraform
 
 on:
   push:
-    branches: [ "main" ]
+    branches:
+      - main
 
 env:
   AWS_REGION: us-east-1
