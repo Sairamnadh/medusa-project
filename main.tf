@@ -73,6 +73,14 @@ resource "aws_ecs_service" "medusa_service" {
     assign_public_ip = true
   }
 
+  # Ignore changes to prevent issues with idempotency
+  lifecycle {
+    ignore_changes = [
+      desired_count,
+      task_definition
+    ]
+  }
+
   tags = {
     Name = "medusa-service"
   }
