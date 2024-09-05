@@ -35,17 +35,23 @@ jobs:
 
     - name: Terraform Init
       run: terraform init
+      working-directory: ./path/to/terraform/configs
 
-    - name: Import existing resources
-      run: |
-        terraform import aws_ecr_repository.medusa_ecr medusa-repository
-        terraform import aws_iam_role.ecs_execution_role ecsExecutionRole
+    - name: Terraform Import ECR Repository
+      run: terraform import aws_ecr_repository.medusa_ecr medusa-repository
+      working-directory: ./path/to/terraform/configs
+
+    - name: Terraform Import IAM Role
+      run: terraform import aws_iam_role.ecs_execution_role ecsExecutionRole
+      working-directory: ./path/to/terraform/configs
 
     - name: Terraform Plan
       run: terraform plan
+      working-directory: ./path/to/terraform/configs
 
     - name: Terraform Apply
       run: terraform apply -auto-approve
+      working-directory: ./path/to/terraform/configs
 
     - name: Login to Amazon ECR
       id: login-ecr
@@ -64,6 +70,8 @@ jobs:
     - name: Update ECS Task Definition with New Image
       run: |
         terraform apply -auto-approve -var="image_id=${{ env.image }}"
+      working-directory: ./path/to/terraform/configs
 
     - name: Deploy with Terraform
       run: terraform apply -auto-approve
+      working-directory: ./path/to/terraform/configs
