@@ -52,9 +52,14 @@ jobs:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         IMAGE_TAG: ${{ github.sha }}
       run: |
-        docker build -t $ECR_REGISTRY/medusa-repo:$IMAGE_TAG .
-        docker push $ECR_REGISTRY/medusa-repo:$IMAGE_TAG
-        echo "image=$ECR_REGISTRY/medusa-repo:$IMAGE_TAG" >> $GITHUB_ENV
+        if [ -f "Dockerfile" ]; then
+          docker build -t $ECR_REGISTRY/medusa-repo:$IMAGE_TAG .
+          docker tag medusa-repo:$IMAGE_TAG $ECR_REGISTRY/medusa-repo:$IMAGE_TAG
+          docker push $ECR_REGISTRY/medusa-repo:$IMAGE_TAG
+          echo "image=$ECR_REGISTRY/medusa-repo:$IMAGE_TAG" >> $GITHUB_ENV
+        else
+          echo "Dockerfile not found, skipping Docker build and push"
+        fi
 
     - name: Update ECS Task Definition with New Image
       run: |
